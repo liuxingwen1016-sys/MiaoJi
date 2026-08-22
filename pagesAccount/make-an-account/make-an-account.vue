@@ -128,8 +128,8 @@
 					@change="tapKeyboard" 
 					@backspace="tapBackspace" 
 					:safeAreaInsetBottom="false" 
-					:secondOne="secondOneData.second_name ? secondOneData.second_name : '秒记1'"
-					:secondTwo="secondTwoData.second_name ? secondTwoData.second_name : '秒记2'"
+					:secondOne="secondOneData.second_name || '秒记1'"
+					:secondTwo="secondTwoData.second_name || '秒记2'"
 				></u-keyboard>
 			</view>
 		</view>
@@ -299,8 +299,8 @@
 				// 再记按钮触发函数：使用节流
 				throttleAddAgain: throttle(this.addAgain, 5000),
 				// 秒记数据
-				secondOneData: null,
-				secondTwoData: null,
+				secondOneData: {},
+				secondTwoData: {},
 				throttleAddSecond: throttle(this.addSecond, 5000),
 				secondId: ''
 			};
@@ -323,7 +323,7 @@
 				}
 			}
 		},
-		onLoad({type,tab}) {
+		onLoad({type,tab} = {}) {
 			this.pageType = type ?? 'add'
 			this.initPage()
 			this.initEditPage(type,tab)
@@ -342,7 +342,9 @@
 				this.categoryIconListForIncome = getCategoryIconListForIncome()
 				// 从缓存中读取用户资产信息，金额从大到小排序
 				const storageUserAssets = uni.getStorageSync('mj-user-assets')
-				this.userAssets = storageUserAssets.sort((a, b) => b.asset_balance - a.asset_balance)
+				this.userAssets = (Array.isArray(storageUserAssets) ? storageUserAssets : [])
+					.slice()
+					.sort((a, b) => b.asset_balance - a.asset_balance)
 				this.expendOrIncomeInfo.asset_id = this.userAssets.filter(asset => asset.default_asset === true)[0]?._id ?? ''
 				this.assetsStyle = getAssetsStyle()
 				this.addAssetStyle()
@@ -1059,6 +1061,8 @@
 			},
 			/** 秒记相关方法 */
 			async getUserSeconds() {
+				this.secondOneData = {}
+				this.secondTwoData = {}
 				const res = await db.collection('mj-user-seconds').where('user_id == $cloudEnv_uid').get()
 				res.result.data.forEach(item => {
 					if (item.second_type === 1) {
