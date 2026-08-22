@@ -20,7 +20,7 @@
 </template>
 
 <script>
-	const db = uniCloud.database()
+	import { db } from '@/utils/local-db.js'
 	export default {
 		data() {
 			return {

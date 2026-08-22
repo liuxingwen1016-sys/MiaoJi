@@ -82,7 +82,7 @@
 	import { themeColor } from '@/uni.scss'
 	import { formatOneTemplate } from '@/utils/formatTemplate.js'
 	
-	const db = uniCloud.database()
+	import { db } from '@/utils/local-db.js'
 	export default {
 		data() {
 			return {

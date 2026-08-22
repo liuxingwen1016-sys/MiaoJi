@@ -58,7 +58,7 @@
 <script>
 	import colorGradient from '../../uni_modules/uview-ui/libs/function/colorGradient';
 	import {getAssetsStyle} from "@/utils/icon-config.js";
-	const db = uniCloud.database()
+	import { db } from '@/utils/local-db.js'
 
 	export default {
 		data() {

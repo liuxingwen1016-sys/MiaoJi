@@ -1,9 +1,9 @@
 <template>
 	<view class="about">
-		<view class="logo" @click="subMsg">
+		<view class="logo">
 			<u--image src="/static/logo.png" width="72px" height="72px" radius="20px" ></u--image>
 			<view class="version">
-				Version：<text class="highlight">1.0.0</text>(Alpha)
+				Version：<text class="highlight">1.1.0</text>(Local)
 			</view>
 			<view class="version">
 				Codename："Suzumiya Haruhi no Shôshitsu"
@@ -12,15 +12,15 @@
 		<view class="main">
 			<mj-card title="关于">
 				<view class="about-textarea">
-					妙记账单 ( 以下简称妙记) 是我自己的练手项目，仅供学习使用。如果你觉得妙记做的不错的话，可以安利给朋友。如果你在寻找功能更多，记账更优雅的应用，可以去应用商店搜索<text class="highlight">小青账</text>下载，我的项目借鉴了其UI界面和用户行为逻辑，在此基础上进行了简化，如果你想体验功能更完整的记账，请下载<text class="highlight">小青账</text>。
+					妙记账单本地版是一款无需账号、无需服务器的离线记账应用。账单、资产、模板、秒记、定时任务和个人资料全部保存在当前设备中，不会上传到云端。
 				</view>
 				<view class="about-textarea">
-					点击页面上方Logo可以订阅妙记的更新说明🥺
+					定时记账会在应用启动或重新进入前台时补记到期任务；卸载应用或清除本地数据后无法恢复，请妥善保管设备数据。
 				</view>
 			</mj-card>
 			<mj-card title="开源">
 				<view class="about-textarea">
-					妙记使用MIT开源协议，您可以随意修改使用，如果我的产品有帮到你，给项目点点<text class="highlight">Star</text>吧，这对我真的很重要！项目地址：<text class="highlight">github.com/ztkuaikuai/MiaoJi</text>
+					妙记使用 MIT 开源协议。本地化改造版本项目地址：<text class="highlight">github.com/liuxingwen1016-sys/MiaoJi</text>；原项目地址：<text class="highlight">github.com/ztkuaikuai/MiaoJi</text>。
 				</view>
 			</mj-card>
 			<u-divider text="版本更新说明"></u-divider>
@@ -154,18 +154,6 @@
 		<u-safe-bottom></u-safe-bottom>
 	</view>
 </template>
-
-<script>
-	import { subscribeMessage } from '@/utils/subscribeMessage.js'
-	export default {
-		methods: {
-			// 订阅版本更新说明消息
-			subMsg() {
-				subscribeMessage(['kGUsXGcTKBAA239WAxPCbn3Sv2svDGWTqsglYZMiqLI'])
-			}
-		}
-	}
-</script>
 
 <style lang="scss" scoped>
 .about {

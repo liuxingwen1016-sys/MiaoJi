@@ -1,13 +1,15 @@
 <script>
-import uniIdPageInit from '@/uni_modules/uni-id-pages/init.js';
+import { initializeLocalData } from '@/utils/local-db.js'
+import { processDueCronTasks } from '@/utils/local-cron.js'
 
 export default {
   onLaunch: async function () {
-	await uniIdPageInit()
-    console.log("App Launch");
+	initializeLocalData()
+	await processDueCronTasks()
+    console.log("妙记本地版已启动");
   },
-  onShow: function () {
-    console.log("App Show");
+  onShow: async function () {
+	await processDueCronTasks()
   },
   onHide: function () {
     console.log("App Hide");

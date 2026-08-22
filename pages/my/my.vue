@@ -11,7 +11,7 @@
 							Hi {{userInfo.nickname || '朋友'}}
 						</view>
 						<view class="day">
-							今天是你记账的第{{userInfo.useDate}}天
+							本机离线保存 · 第{{userInfo.useDate}}天
 						</view>
 					</view>
 				</view>
@@ -65,35 +65,29 @@
 					</view>
 					<uni-icons slot="icon" type="info" size="36rpx"></uni-icons>
 				</u-cell>
-				<u-cell title="反馈问题" :isLink="true" @click="clickFeedback">
+				<u-cell title="使用建议（本地）" :isLink="true" @click="clickFeedback">
 					<uni-icons slot="icon" type="compose" size="36rpx"></uni-icons>
 				</u-cell>
-				<u-cell title="联系作者" :isLink="true" @click="clickAuthor">
-					<uni-icons slot="icon" type="personadd" size="36rpx"></uni-icons>
+				<u-cell title="本地数据说明" :isLink="true" @click="clickDataInfo">
+					<uni-icons slot="icon" type="locked" size="36rpx"></uni-icons>
 				</u-cell>
-				<u-cell title="退出登录" :isLink="true" @click="logout">
-					<uni-icons slot="icon" type="mj-logout" size="32rpx" customPrefix="miaoji"></uni-icons>
+				<u-cell title="清除本地数据" :isLink="true" @click="clearLocalData">
+					<uni-icons slot="icon" type="trash" size="36rpx"></uni-icons>
 				</u-cell>
-				<!-- <u-cell title="注销账号" :isLink="true" @click="deactivate">
-					<uni-icons slot="icon" type="mj-stop" size="32rpx" customPrefix="miaoji"></uni-icons>
-				</u-cell> -->
 			</u-cell-group>
 		</view>
 	</view>
 </template>
 
 <script>
-	import UT from '@/utils/user-state.js'
-	import {mutations} from '@/uni_modules/uni-id-pages/common/store.js'
-	const db = uniCloud.database()
-	const uniIdCo = uniCloud.importObject('uni-id-co')
+	import { getLocalUserInfo, resetLocalData } from '@/utils/local-db.js'
 	export default {
 		data() {
 			return {
 				userInfo: {
 					avatarSrc: '',
 					nickname: '',
-					registerDate: 0,
+					registerDate: '',
 					useDate: 0,
 				},
 				optionList: [{
@@ -133,25 +127,9 @@
 			};
 		},
 		onReady() {
-			const state = UT.checkUserTokenExpierd() // 检查老用户的token是否过期，如果过期则跳转登录，并返回true；没过期返回false
-			if(state) return
-			// console.log("用户token没过期，继续执行下面的逻辑");
-			
-			// 如果用户登录了，进行初始化
-			const {uid} = uniCloud.getCurrentUserInfo()
-			if (uid) {
-				this.getUserInfo()
-			}
+			this.getUserInfo()
 		},
 		onShow() {
-			// 判断用户是否登录，如果未登录 则跳转到登录页
-			const {uid} = uniCloud.getCurrentUserInfo()
-			if (!uid) {
-				uni.redirectTo({
-					url: "/uni_modules/uni-id-pages/pages/login/login-withoutpwd"
-				})
-				return
-			}
 			this.resetUserInfo()
 		},
 		methods: {
@@ -203,9 +181,9 @@
 					url: "/pagesMy/feedback/feedback"
 				})
 			},
-			clickAuthor() {
+			clickDataInfo() {
 				uni.showModal({
-					content: "微信：kuaikuaitz",
+					content: "账单、资产、模板和个人资料仅保存在当前设备，不会上传到任何服务器。卸载应用或清除数据后无法恢复。",
 					cancelColor: "rgba(0,0,0,0.6)",
 					confirmColor:"#9fcba7",
 					showCancel:false
@@ -216,47 +194,21 @@
 					url:"/pagesMy/about/about"
 				})
 			},
-			logout() {
-				mutations.logout()
-			},
-			// 注销
-			deactivate() {
-				uni.navigateTo({
-					url: "/uni_modules/uni-id-pages/pages/userinfo/deactivate/deactivate"
+			clearLocalData() {
+				uni.showModal({
+					title: '清除本地数据',
+					content: '确定清除全部账单、资产、模板和个人资料吗？此操作无法撤销。',
+					confirmColor: '#e94459',
+					success: res => {
+						if (!res.confirm) return
+						resetLocalData()
+						uni.reLaunch({ url: '/pages/index/index' })
+					}
 				})
 			},
-			// 页面挂载时获取数据  1 如果有缓存，获取缓存进行渲染  2 若无缓存，获取db数据，并赋值  3 获取用户使用天数 4 存入缓存
-			async getUserInfo() {
-				try {
-					const storageUserInfo = uni.getStorageSync('mj-user-info')
-					if (storageUserInfo) {
-						Object.assign(this.userInfo, storageUserInfo)   // 里面的registerDate是yyyy-mm-dd格式
-					} else {
-						const res = await db.collection("uni-id-users").where("_id == $cloudEnv_uid").field(
-							"_id,nickname,avatar,register_date").get()
-						let {
-							avatar: avatarSrc,
-							nickname,
-							register_date: registerDate
-						} = res.result.data[0]
-						
-						// 注册日期格式化
-						registerDate = uni.$u.timeFormat(registerDate,'yyyy-mm-dd')
-						
-						Object.assign(this.userInfo, {
-							avatarSrc,
-							nickname,
-							registerDate
-						})
-					}
-					this.getUserDate()
-					uni.setStorage({
-						key:'mj-user-info',
-						data: this.userInfo
-					})
-				} catch (err) {
-					console.log('err',err);
-				}
+			getUserInfo() {
+				Object.assign(this.userInfo, getLocalUserInfo())
+				this.getUserDate()
 			},
 			resetUserInfo() {
 				const storageUserInfo = uni.getStorageSync('mj-user-info')
@@ -270,9 +222,9 @@
 			},
 			// 获取使用妙记天数
 			getUserDate() {
-				const registerDateTimestamp = Date.parse(this.userInfo.registerDate)
+				const registerDateTimestamp = Date.parse(this.userInfo.registerDate) || Date.now()
 				let useDate = Date.now() - registerDateTimestamp
-				this.userInfo.useDate = Math.ceil(useDate / (1000 * 60 * 60 * 24))
+				this.userInfo.useDate = Math.max(1, Math.ceil(useDate / (1000 * 60 * 60 * 24)))
 			}
 		},
 		// 分享功能

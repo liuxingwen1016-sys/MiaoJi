@@ -84,8 +84,7 @@
 </template>
 
 <script>
-	import UT from '@/utils/user-state.js'
-	const db = uniCloud.database()
+	import { db } from '@/utils/local-db.js'
 	export default {
 		data() {
 			return {
@@ -119,22 +118,9 @@
 			}
 		},
 		onReady() {
-			const state = UT.checkUserTokenExpierd() // 检查老用户的token是否过期，如果过期则跳转登录，并返回true；没过期返回false
-			if(state) return
-			// console.log("用户token没过期，继续执行下面的逻辑");
-			
-			// 判断用户是否登录，如果未登录，说明是新用户；如果登录了 则获取账单、资产
-			const {uid} = uniCloud.getCurrentUserInfo()
-			if (!uid) {
-				
-			} else {
-				// 获取用户3日账单列表
-				this.getUserBills()
-				// 获取用户资产列表
-				this.getUserAssets()
-				// 获取用户本月支出和本月收入
-				this.getUserMonthlyBillBalance()
-			}
+			this.getUserBills()
+			this.getUserAssets()
+			this.getUserMonthlyBillBalance()
 			
 			// 绑定全局事件：更新账单、资产、月支出月收入
 			uni.$on('updateBillsList',this.getUserBills)
@@ -156,14 +142,6 @@
 				this.isIndexShow ? this.bottomBtnText = '添加资产' : this.bottomBtnText = '点我记账'
 			},
 			clickBottomBtn() {
-				// 判断用户是否登录，如果未登录 则跳转到登录页
-				const {uid} = uniCloud.getCurrentUserInfo()
-				if (!uid) {
-					uni.redirectTo({
-						url: "/uni_modules/uni-id-pages/pages/login/login-withoutpwd"
-					})
-					return
-				}
 				let url = ''
 				this.isIndexShow ? url = '/pagesAccount/make-an-asset/make-an-asset' : url = '/pagesAccount/make-an-account/make-an-account'
 				uni.navigateTo({

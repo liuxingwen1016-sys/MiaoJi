@@ -3,7 +3,7 @@
 		<view class="linear-gradient"></view>
 		<mj-card title="食用说明">
 			<view style="font-size: 28rpx;color: rgba(0, 0, 0, 0.6);">
-				定时记账可<span style="font-weight: 700;">用于记录定期重复的账单，配置好规则即可自动记账</span>。如每30天买一张月卡花费30元，每天通勤花费8元等等，类似上述情况可设置为定时记账。
+				定时记账可<span style="font-weight: 700;">用于记录定期重复的账单</span>。本地版会在每次启动或回到应用时自动补记已经到期的任务，无需网络连接。
 			</view>
 		</mj-card>
 		<!-- 定时任务卡片：遍历展示用户定时任务 -->
@@ -57,8 +57,7 @@
 <script>
 	import { themeColor } from '@/uni.scss'
 	import { formatOneTemplate } from '@/utils/formatTemplate.js'
-	
-	const db = uniCloud.database()
+	import { db } from '@/utils/local-db.js'
 	export default {
 		async onLoad() {
 			// 这里先获取模板数据为的是在获取定时任务后通过模板id找到对应模板进行渲染

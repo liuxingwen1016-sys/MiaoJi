@@ -5,7 +5,7 @@
 			<view class="me">
 				<view class="avatar">
 					<u-avatar :src="userInfo.avatarSrc" size="100rpx"></u-avatar>
-					<button open-type="chooseAvatar" class="avatarBtn" @chooseavatar="getAvatar"></button>
+					<view class="avatarBtn" @click="chooseAvatar"></view>
 				</view>
 				<view class="main">
 					<view class="username" @click="clickName">
@@ -42,7 +42,7 @@
 </template>
 
 <script>
-	const db = uniCloud.database()
+	import { getLocalUserInfo, saveLocalUserInfo } from '@/utils/local-db.js'
 	export default {
 		data() {
 			return {
@@ -61,15 +61,28 @@
 			}
 		},
 		methods: {
-			getAvatar(res) {
-				// console.log("头像被点击");
-				// 修改头像  修改后保存在本地存储中 并修改数据库中的头像url
-				this.userInfo.avatarSrc = res.detail.avatarUrl
-				uni.setStorageSync('mj-user-info', this.userInfo)
-				db.collection("uni-id-users").where("_id == $cloudEnv_uid").update({
-					avatar: res.detail.avatarUrl
+			chooseAvatar() {
+				uni.chooseImage({
+					count: 1,
+					sizeType: ['compressed'],
+					sourceType: ['album', 'camera'],
+					success: res => {
+						const tempFilePath = res.tempFilePaths[0]
+						const saveAvatar = path => {
+							this.userInfo.avatarSrc = path
+							saveLocalUserInfo(this.userInfo)
+						}
+						if (typeof uni.saveFile !== 'function') {
+							saveAvatar(tempFilePath)
+							return
+						}
+						uni.saveFile({
+							tempFilePath,
+							success: saved => saveAvatar(saved.savedFilePath),
+							fail: () => saveAvatar(tempFilePath)
+						})
+					}
 				})
-
 			},
 			clickName() {
 				// console.log("昵称被点击");
@@ -88,60 +101,12 @@
 					return
 				}
 				this.userInfo.nickname = res.detail.value.nickname
-				uni.setStorageSync('mj-user-info', this.userInfo)
-				db.collection("uni-id-users").where("_id == $cloudEnv_uid").update({
-					nickname: res.detail.value.nickname
-				})
+				saveLocalUserInfo(this.userInfo)
 				this.showNicaNamePop = false
 			},
-			// 页面挂载时获取数据   1 如果有缓存，则给this.userInfo赋值   2 获取db数据  3 判断数据库数据和缓存中的数据有无区别，有区别覆盖缓存,并再次赋值
-			async getUserInfo() {
-				const userInfoFromStorage = uni.getStorageSync('mj-user-info')
-				if(userInfoFromStorage) {
-					Object.assign(this.userInfo, userInfoFromStorage)
-				}
-				
-				const res = await db.collection("uni-id-users").where("_id == $cloudEnv_uid").field("_id,nickname,avatar,register_date").get()
-				let {avatar: avatarSrc, nickname, register_date: registerDate} = res.result.data[0]
-				// 使用注册日期计算出会员编号
-				const userLabel = Math.round(registerDate * 3 / 200000).toString()
-				// 注册日期格式化
-				this.registerDateForTitle = uni.$u.timeFormat(registerDate,'yyyy年mm月')
-				registerDate = uni.$u.timeFormat(registerDate,'yyyy-mm-dd')
-				
-				
-				const objTemp = {avatarSrc, nickname, registerDate, userLabel}
-				if(!this.compareObjects(userInfoFromStorage,objTemp)) {
-					// 如果数据库数据和缓存中的数据有区别，覆盖缓存，并再次赋值
-					Object.assign(this.userInfo, objTemp)
-					uni.setStorageSync('mj-user-info', this.userInfo)
-				}
-			},
-			// 比较两个对象的属性名和值是否相等
-			compareObjects(obj1, obj2) {
-			  // 获取对象的属性名数组
-			  const keys1 = Object.keys(obj1);
-			  const keys2 = Object.keys(obj2);
-			
-			  // 检查属性名数组长度是否相等
-			  if (keys1.length !== keys2.length) {
-			    return false;
-			  }
-			
-			  // 比较属性名和属性值
-			  for (let key of keys1) {
-			    // 检查属性名是否存在于第二个对象中
-			    if (!obj2.hasOwnProperty(key)) {
-			      return false;
-			    }
-			
-			    // 比较属性值
-			    if (obj1[key] !== obj2[key]) {
-			      return false;
-			    }
-			  }
-			
-			  return true;
+			getUserInfo() {
+				Object.assign(this.userInfo, getLocalUserInfo())
+				this.registerDateForTitle = uni.$u.timeFormat(Date.parse(this.userInfo.registerDate),'yyyy年mm月')
 			}
 		},
 		onReady() {

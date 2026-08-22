@@ -68,9 +68,9 @@
 	</view>
 </template>
 
-<script>
+	<script>
 	import {getAssetsStyle} from "@/utils/icon-config.js";
-	const db = uniCloud.database()
+	import { db } from '@/utils/local-db.js'
 	
 	export default {
 		name: "mj-asset-card",

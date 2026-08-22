@@ -50,8 +50,8 @@
 	</view>
 </template>
 
-<script>
-	const db = uniCloud.database()
+	<script>
+	import { db } from '@/utils/local-db.js'
 	import {getAllIconList, getAssetsStyle} from "@/utils/icon-config.js";
 	export default {
 		name:"mj-bill-template",

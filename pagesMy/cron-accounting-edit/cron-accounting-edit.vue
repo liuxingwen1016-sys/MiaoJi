@@ -147,9 +147,8 @@
 <script>
 	import { themeColor } from '@/uni.scss'
 	import { formatOneTemplate } from '@/utils/formatTemplate.js'
-	
-	const db = uniCloud.database()
-	const mjCronAccounting = uniCloud.importObject('miaoji-cron-accounting')
+	import { db } from '@/utils/local-db.js'
+	import { executeCronTaskById } from '@/utils/local-cron.js'
 	export default {
 		async onLoad({type}) {
 			this.pageType = type
@@ -307,7 +306,7 @@
 				// 3 判断是否需要添加后，调用云函数执行该任务一次
 				const currentDate = uni.$u.timeFormat(Date.now())  // 'YYYY-MM-DD'
 				if (this.form.state === 1 && currentDate === this.form.rule.expected_next_execution_time) {
-					mjCronAccounting.getCronAccountingById(result.id)
+					await executeCronTaskById(result.id)
 				}
 			},
 			async editCron() {
@@ -337,7 +336,7 @@
 				await db.collection('mj-user-cron-accounting').doc(this.form._id).update(data)
 				// 调用云函数执行任务
 				if (isNeedCall) {
-					mjCronAccounting.getCronAccountingById(this.form._id)
+					await executeCronTaskById(this.form._id)
 				}
 			},
 			// 判断规则是否改变
