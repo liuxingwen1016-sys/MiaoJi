@@ -85,6 +85,7 @@
 
 <script>
 	import { db } from '@/utils/local-db.js'
+	import { formatStoredAssetsForDisplay } from '@/utils/formatAsset.js'
 	export default {
 		data() {
 			return {
@@ -102,8 +103,8 @@
 			// 计算总资产
 			totalAssets() {
 				// 筛选出计入总资产的资产项
-				let userAssetsIncludeInTotalAssets = this.userAssets.filter(item => item.include_in_total_assets == true)
-				return userAssetsIncludeInTotalAssets.reduce((lastValue, currentArr) => lastValue + currentArr.asset_balance , 0)
+				const userAssetsIncludeInTotalAssets = this.userAssets.filter(item => item.include_in_total_assets === true)
+				return userAssetsIncludeInTotalAssets.reduce((total, asset) => total + (Number(asset.asset_balance) || 0), 0)
 			},
 			// 计算近三日账单个数
 			userBillsCount() {
@@ -195,21 +196,21 @@
 			async getUserAssets(params = false) {
 				// console.log("getUserAssets");
 				const res = await db.collection("mj-user-assets").where(" user_id == $cloudEnv_uid ").get()
-				this.userAssets = []
-				this.userAssets = res.result.data
+				let userAssets = Array.isArray(res.result.data) ? res.result.data : []
 				// 如果用户资产列表为空，则创建默认资产，并且设置记账使用的默认资产
-				if(!this.userAssets.length) {
+				if(!userAssets.length) {
 					await db.collection("mj-user-assets").add({
 						asset_type: 'default',
 						asset_balance: 0,
+						hide_in_interface: false,
+						include_in_total_assets: true,
 						default_asset: true
 					})
 					const defalutAsset = await db.collection("mj-user-assets").where(" user_id == $cloudEnv_uid ").get()
-					this.userAssets = []
-					this.userAssets = defalutAsset.result.data
+					userAssets = defalutAsset.result.data
 				}
-				// 统一修改金额
-				this.userAssets.forEach(item => item.asset_balance /= 100)
+				// 兼容旧数据缺失的显示字段，并将金额单位由分转换为元
+				this.userAssets = formatStoredAssetsForDisplay(userAssets)
 				// 保存在缓存中
 				uni.setStorageSync('mj-user-assets', this.userAssets)
 				if (params) {

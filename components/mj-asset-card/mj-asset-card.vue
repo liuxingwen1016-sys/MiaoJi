@@ -71,10 +71,24 @@
 	<script>
 	import {getAssetsStyle} from "@/utils/icon-config.js";
 	import { db } from '@/utils/local-db.js'
+	import { normalizeAsset } from '@/utils/formatAsset.js'
 	
 	export default {
 		name: "mj-asset-card",
-		props: ['userAssetsFromDB','isEyeShow','safeAreaInsetBottom'],
+		props: {
+			userAssetsFromDB: {
+				type: Array,
+				default: () => []
+			},
+			isEyeShow: {
+				type: Boolean,
+				default: true
+			},
+			safeAreaInsetBottom: {
+				type: Boolean,
+				default: false
+			}
+		},
 
 		data() {
 			return {
@@ -99,17 +113,12 @@
 		},
 		computed: {
 			userAssetsShow() {
-				return this.assets.filter(item => item.hide_in_interface == false)
+				return this.assets.filter(item => item.hide_in_interface !== true)
 			},
 			// 隐藏资产，一定不计入总资产
 			userAssetsHide() {
-				return this.assets.filter(item => item.hide_in_interface == true)
+				return this.assets.filter(item => item.hide_in_interface === true)
 			}
-		},
-		onReady() {
-			// console.log('onReady',this.userAssetsFromDB);
-			this.assetsStyle = getAssetsStyle()
-			this.addAssetStyle()
 		},
 		methods: {
 			clickSwipeActionItemBtn({index},asset) { // 0 点击了修改  1 点击了删除
@@ -145,19 +154,28 @@
 				// console.log(this.userAssetsHide);
 			},
 			// 给userAssetsFromDB赋值为assets（首先，不可以直接修改props，其次将对象内容变成响应式的，可以被computed监测到），并添加type值对应的assetStyle
-			addAssetStyle() {
-				this.assets = this.userAssetsFromDB
-				this.assets.forEach(asset => {
-					asset.assetStyle = this.assetsStyle.find(item => item.type == asset.asset_type)
+			addAssetStyle(userAssets = this.userAssetsFromDB) {
+				if (!this.assetsStyle.length) this.assetsStyle = getAssetsStyle()
+				const fallbackStyle = this.assetsStyle.find(item => item.type === 'default') || {
+					icon: 'mj-creditcard',
+					title: '资产账户',
+					color: '#212121'
+				}
+				this.assets = (Array.isArray(userAssets) ? userAssets : []).map(item => {
+					const asset = normalizeAsset(item)
+					return {
+						...asset,
+						assetStyle: this.assetsStyle.find(style => style.type === asset.asset_type) || fallbackStyle
+					}
 				})
-				// console.log('addAssetStyle',this.assets);
 			}
 		},
 		watch: {
 			userAssetsFromDB: {
-				deep:true,
-				handler: function() {
-					this.addAssetStyle()
+				deep: true,
+				immediate: true,
+				handler: function(userAssets) {
+					this.addAssetStyle(userAssets)
 				}
 			}
 		}

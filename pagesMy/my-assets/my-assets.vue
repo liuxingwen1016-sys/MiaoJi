@@ -21,7 +21,7 @@
 			</u-cell-group>
 		</mj-card>
 		<view class="assets-wrapper">
-			<mj-asset-card :userAssetsFromDB="userAssets" isEyeShow="true" :safeAreaInsetBottom="true"></mj-asset-card>
+			<mj-asset-card :userAssetsFromDB="userAssets" :isEyeShow="true" :safeAreaInsetBottom="true"></mj-asset-card>
 		</view>
 		
 		<!-- 展示资产页的popup -->
@@ -50,6 +50,7 @@
 <script>
 	import {getAssetsStyle} from "@/utils/icon-config.js";
 	import { db } from '@/utils/local-db.js'
+	import { normalizeAsset } from '@/utils/formatAsset.js'
 	export default {
 		data() {
 			return {
@@ -69,7 +70,8 @@
 			}
 		},
 		onLoad() {
-			this.userAssets = uni.getStorageSync('mj-user-assets')
+			const storageAssets = uni.getStorageSync('mj-user-assets')
+			this.userAssets = (Array.isArray(storageAssets) ? storageAssets : []).map(normalizeAsset)
 			this.addAssetStyle()
 			this.defaultAsset = this.userAssets.filter(asset => asset.default_asset === true)[0] ?? {}
 		},

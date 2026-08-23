@@ -195,6 +195,7 @@
 	import { throttle } from '@/utils/throttle.js'
 	import { formatOneTemplate } from '@/utils/formatTemplate.js'
 	import { db } from '@/utils/local-db.js'
+	import { formatStoredAssetsForDisplay } from '@/utils/formatAsset.js'
 	export default {
 		data() {
 			return {
@@ -1053,9 +1054,7 @@
 			async getUserAssets() {
 				// console.log("getUserAssets");
 				const res = await db.collection("mj-user-assets").where(" user_id == $cloudEnv_uid ").get()
-				const userAssetsTemp = res.result.data
-				// 统一修改金额
-				userAssetsTemp.forEach(item => item.asset_balance /= 100)
+				const userAssetsTemp = formatStoredAssetsForDisplay(res.result.data)
 				// 保存在缓存中
 				uni.setStorageSync('mj-user-assets', userAssetsTemp)
 			},
