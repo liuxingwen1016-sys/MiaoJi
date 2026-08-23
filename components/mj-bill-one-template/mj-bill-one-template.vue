@@ -10,11 +10,11 @@
 			</view>
 			<view class="right" v-if="oneTemplate.bill_type !== 2">
 				<u--text mode="price" :text="oneTemplate.bill_amount" :color="oneTemplate.bill_type === 0 ? '#dd524d' : '#219a6d'" size="32rpx" bold></u--text>
-				<view class="minor">{{oneTemplate.asset_id[0].asset_name || oneTemplate.assetStyle.title}}</view>
+				<view class="minor">{{oneTemplate.assetTitle || '资产已删除'}}</view>
 			</view>
 			<view class="right" v-else>
 				<u--text mode="price" :text="oneTemplate.transfer_amount / 100" color="#212121" size="32rpx" bold></u--text>
-				<view class="minor">{{oneTemplate.asset_id[0].asset_name || oneTemplate.assetStyle.title}}</view>
+				<view class="minor">{{oneTemplate.assetTitle || '资产已删除'}}</view>
 			</view>
 		</template>
 		<template v-else>

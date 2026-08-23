@@ -13,7 +13,7 @@
 					</view>
 					<view class="right">
 						<u--text mode="price" :text="temp.bill_amount" :color="temp.bill_type === 0 ? '#dd524d' : '#219a6d'" size="32rpx" bold></u--text>
-						<view class="minor">{{temp.asset_id[0].asset_name || temp.assetStyle.title}}</view>
+						<view class="minor">{{temp.assetTitle}}</view>
 					</view>
 				</view>
 			</mj-card>
@@ -28,7 +28,7 @@
 					</view>
 					<view class="right">
 						<u--text mode="price" :text="temp.transfer_amount / 100" color="#212121" size="32rpx" bold></u--text>
-						<view class="minor">{{temp.asset_id[0].asset_name || temp.assetStyle.title}}</view>
+						<view class="minor">{{temp.assetTitle}}</view>
 					</view>
 				</view>
 			</mj-card>
@@ -52,23 +52,33 @@
 
 	<script>
 	import { db } from '@/utils/local-db.js'
-	import {getAllIconList, getAssetsStyle} from "@/utils/icon-config.js";
+	import { formatOneTemplate } from '@/utils/formatTemplate.js'
 	export default {
 		name:"mj-bill-template",
 		// templateList 原始模板列表；pageType 页面类型:account 记一笔页面  temp 管理模板页面
-		props: ['templateList','pageType'],
+		props: {
+			templateList: {
+				type: Array,
+				default: () => []
+			},
+			pageType: {
+				type: String,
+				default: 'account'
+			}
+		},
 		data() {
 			return {
 				templateDetails: {},
 				showBillDetails: false,
-				iconGather: getAllIconList(),
-				assetsStyle: getAssetsStyle(),
 				formatTempList: []
 			};
 		},
 		watch: {
-			templateList() {
-				this.formatTemp()
+			templateList: {
+				handler() {
+					this.formatTemp()
+				},
+				immediate: true
 			}
 		},
 		methods: {
@@ -123,39 +133,9 @@
 				}
 			},
 			formatTemp() {
-				// 获取用户资产信息
-				const assets = uni.getStorageSync('mj-user-assets')
-				const arr = uni.$u.deepClone(this.templateList)
-				// 1 修改金额单位 变为元
-				// 2 通过category_type给每一条添加对应billStyle
-				// 3 通过asset_type给每一条添加对应的assetStyle
-				// 4 如果转入资产的id，给其添加对应的destinationAssetStyle
-				arr.forEach(temp => {
-					temp.bill_amount /= 100
-					temp.billStyle = this.iconGather.find(item => item.type === temp.category_type)
-					// 如果为undefined，则对应的资产被用户删除
-					const asset_type = assets.find(item => item._id ===  temp.asset_id[0]?._id)?.asset_type
-					// 判断模板的资产id对应的资产有没有被用户删除
-					if(asset_type) {
-						temp.assetStyle = this.assetsStyle.find(item => item.type === asset_type)
-						// hasAsset 用户是否存在对应资产
-						temp.hasAsset = true
-					} else {
-						temp.assetStyle = {}
-						temp.assetStyle.title = '资产已删除'
-						temp.hasAsset = false
-					}
-					const destination_asset_type = assets.find(item => item._id ===  temp.destination_asset_id[0]?._id)?.asset_type
-					if(destination_asset_type) {
-						temp.destinationAssetStyle = this.assetsStyle.find(item => item.type === destination_asset_type)
-						temp.hasDestinationAsset = true
-					} else {
-						temp.destinationAssetStyle = {}
-						temp.destinationAssetStyle.title = '资产已删除'
-						temp.hasDestinationAsset = false
-					}
-				})
-				this.formatTempList = arr
+				this.formatTempList = this.templateList
+					.filter(temp => temp && typeof temp === 'object')
+					.map(temp => formatOneTemplate(temp))
 			}
 		}
 	}

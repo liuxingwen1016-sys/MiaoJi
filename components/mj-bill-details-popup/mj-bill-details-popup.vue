@@ -53,25 +53,13 @@
 						<view>
 							资产账户
 						</view>
-						<view class="highlight" v-if="billDetails.assetStyle.title">
-							<!-- 格式：资产类型-资产名 -->
-							{{billDetails.asset_id[0].asset_name ? `${billDetails.assetStyle.title} - ${billDetails.asset_id[0].asset_name}` : billDetails.assetStyle.title}}
-						</view>
-						<view class="highlight" v-else>
-							资产已删除
-						</view>
+						<view class="highlight">{{assetDisplayTitle}}</view>
 					</view>
 					<view class="row" v-if="billDetails.bill_type === 2">
 						<view>
 							入账账户
 						</view>
-						<view class="highlight" v-if="billDetails.transferAssetStyle.title">
-							<!-- 格式：资产类型-资产名 -->
-							{{billDetails.destination_asset_id[0].asset_name ? `${billDetails.transferAssetStyle.title} - ${billDetails.destination_asset_id[0].asset_name}` : billDetails.transferAssetStyle.title}}
-						</view>
-						<view class="highlight" v-else>
-							资产已删除
-						</view>
+						<view class="highlight">{{destinationAssetDisplayTitle}}</view>
 					</view>
 				</mj-card>
 				<mj-card title="备注" v-if="billDetails.bill_notes">
@@ -125,19 +113,47 @@
 		},
 		computed: {
 			billDetails() {
-				const bill = this.bill
-				// console.log("computed billDetails",bill);
+				const source = this.bill && typeof this.bill === 'object' ? this.bill : {}
+				const bill = uni.$u.deepClone(source)
+				bill.billStyle = bill.billStyle || { icon: '', title: '未分类' }
+				bill.assetStyle = bill.assetStyle || {}
 				if(bill.bill_type === 2) {
 					// 如果类型为转账  将转账金额转换为元
-					bill.transfer_amount /= 100
-					const assetsStyle = getAssetsStyle()
-					bill.transferAssetStyle = assetsStyle.find(item => item.type === bill.destination_asset_id[0]?.asset_type)
+					bill.transfer_amount = (Number(bill.transfer_amount) || 0) / 100
+					if(!bill.transferAssetStyle) {
+						const destinationAsset = Array.isArray(bill.destination_asset_id)
+							? bill.destination_asset_id[0]
+							: null
+						const assetsStyle = getAssetsStyle()
+						bill.transferAssetStyle = assetsStyle.find(item => item.type === destinationAsset?.asset_type) || {}
+					}
 				}
-				console.log('billDetails',bill);
 				return bill
 			},
+			assetDisplayTitle() {
+				const asset = Array.isArray(this.billDetails.asset_id)
+					? this.billDetails.asset_id[0]
+					: null
+				if(!asset) return '资产已删除'
+				const styleTitle = this.billDetails.assetStyle?.title || ''
+				return asset.asset_name
+					? `${styleTitle ? styleTitle + ' - ' : ''}${asset.asset_name}`
+					: (styleTitle || '未知账户')
+			},
+			destinationAssetDisplayTitle() {
+				const asset = Array.isArray(this.billDetails.destination_asset_id)
+					? this.billDetails.destination_asset_id[0]
+					: null
+				if(!asset) return '资产已删除'
+				const styleTitle = this.billDetails.transferAssetStyle?.title || ''
+				return asset.asset_name
+					? `${styleTitle ? styleTitle + ' - ' : ''}${asset.asset_name}`
+					: (styleTitle || '未知账户')
+			},
 			billDate() {
-				return uni.$u.timeFormat(this.billDetails.bill_date, 'yyyy-mm-dd hh:MM:ss')
+				return this.billDetails.bill_date
+					? uni.$u.timeFormat(this.billDetails.bill_date, 'yyyy-mm-dd hh:MM:ss')
+					: '模板不记录时间'
 			}
 		},
 	}

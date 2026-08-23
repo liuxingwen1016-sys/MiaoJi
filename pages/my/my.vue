@@ -36,20 +36,6 @@
 					</view>
 				</u-grid-item>
 			</u-grid>
-			<!-- 偏好 -->
-			<uni-section class="section" title="偏好" type="line" titleFontSize="32rpx"
-				titleColor="#212121"></uni-section>
-			<u-grid :border="false" @click="clickLike" col="4">
-				<u-grid-item v-for="item,index in likeList" :key="index" >
-					<view class="content">
-						<view class="grid-item">
-							<uni-icons :type="item.icon" size="48rpx" :customPrefix="item.customPrefix"></uni-icons>
-							<view class="grid-text">{{item.title}}</view>
-						</view>
-					</view>
-				</u-grid-item>
-			</u-grid>
-
 			<!-- 其他 -->
 			<uni-section class="section" title="其他" type="line" titleFontSize="32rpx"
 				titleColor="#212121"></uni-section>
@@ -109,18 +95,6 @@
 						icon: 'mj-reloadtime',
 						title: '定时记账',
 						customPrefix: "miaoji"
-					},
-					{
-						icon: 'mj-yuan-circle',
-						title: '预算设置',
-						customPrefix: "miaoji"
-					}
-				],
-				likeList: [
-					{
-						icon: 'mj-individuation',
-						title: '个性化',
-						customPrefix: "miaoji"
 					}
 				],
 				showUserAssetsList: false,
@@ -160,15 +134,6 @@
 							url:"/pagesMy/cron-accounting/cron-accounting"
 						})
 						break
-					default:
-						uni.showToast({
-							title:"正在开发中~",
-							icon: "none"
-						})
-				}
-			},
-			clickLike(index) {
-				switch (index) {
 					default:
 						uni.showToast({
 							title:"正在开发中~",
